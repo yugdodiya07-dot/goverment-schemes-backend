@@ -17,7 +17,7 @@ export interface ISchemeQueryFilters {
 export class SchemeService {
   public static async querySchemes(filters: ISchemeQueryFilters) {
     const page = Math.max(1, Number(filters.page) || 1);
-    const limit = Math.max(1, Math.min(100, Number(filters.limit) || 12));
+    const limit = Math.max(1, Math.min(250, Number(filters.limit) || 120));
     const skip = (page - 1) * limit;
 
     const query: Record<string, any> = {};
