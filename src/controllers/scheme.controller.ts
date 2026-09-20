@@ -15,6 +15,18 @@ export class SchemeController {
     }
   }
 
+  public static async getStatesSummary(req: Request, res: Response, next: NextFunction) {
+    try {
+      const summary = await SchemeService.getStatesSummary();
+      res.status(200).json({
+        success: true,
+        data: summary,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   public static async getSchemeBySlug(req: Request, res: Response, next: NextFunction) {
     try {
       const scheme = await SchemeService.getSchemeBySlug(req.params.slug);

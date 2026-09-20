@@ -8,6 +8,8 @@ export interface IScheme extends Document {
     category: Types.ObjectId | string;
     ministry: string;
     department?: string;
+    schemeLevel: 'Central' | 'State';
+    state: string;
     benefitType: 'Direct Benefit Transfer' | 'Subsidy' | 'Loan / Credit' | 'Insurance' | 'Skill Training' | 'In-Kind Support';
     financialBenefit: string;
     eligibilityCriteria: IEligibilityCriteria;

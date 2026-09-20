@@ -43,6 +43,8 @@ const schemeSchema = new mongoose_1.Schema({
     category: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Category', required: true },
     ministry: { type: String, required: true, trim: true },
     department: { type: String, default: '' },
+    schemeLevel: { type: String, enum: ['Central', 'State'], default: 'Central' },
+    state: { type: String, default: 'All India', trim: true },
     benefitType: {
         type: String,
         enum: ['Direct Benefit Transfer', 'Subsidy', 'Loan / Credit', 'Insurance', 'Skill Training', 'In-Kind Support'],
@@ -72,5 +74,6 @@ const schemeSchema = new mongoose_1.Schema({
 }, { timestamps: true, collection: 'schemes' });
 schemeSchema.index({ title: 'text', shortDescription: 'text', ministry: 'text', tags: 'text' });
 schemeSchema.index({ category: 1, status: 1 });
+schemeSchema.index({ schemeLevel: 1, state: 1, status: 1 });
 exports.Scheme = mongoose_1.default.model('Scheme', schemeSchema);
 //# sourceMappingURL=Scheme.js.map

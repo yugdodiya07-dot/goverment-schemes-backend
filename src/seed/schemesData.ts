@@ -4,6 +4,8 @@ export interface ISchemeSeed {
   categorySlug: string;
   ministry: string;
   department: string;
+  schemeLevel?: 'Central' | 'State';
+  state?: string;
   shortDescription: string;
   description: string;
   benefitType: 'Direct Benefit Transfer' | 'Subsidy' | 'Loan / Credit' | 'Insurance' | 'Skill Training' | 'In-Kind Support';

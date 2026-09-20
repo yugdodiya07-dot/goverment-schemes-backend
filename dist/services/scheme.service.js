@@ -26,8 +26,23 @@ class SchemeService {
         if (filters.benefitType && filters.benefitType !== 'All') {
             query.benefitType = filters.benefitType;
         }
+        if (filters.schemeLevel && filters.schemeLevel !== 'All') {
+            query.schemeLevel = filters.schemeLevel;
+        }
         if (filters.state && filters.state !== 'All') {
-            query['eligibilityCriteria.eligibleStates'] = { $in: ['All', 'National', filters.state] };
+            const isStateOnly = filters.stateOnly === true || filters.stateOnly === 'true' || filters.schemeLevel === 'State';
+            if (isStateOnly) {
+                query.$or = [
+                    { state: filters.state },
+                    { 'eligibilityCriteria.eligibleStates': filters.state },
+                ];
+            }
+            else {
+                query.$or = [
+                    { 'eligibilityCriteria.eligibleStates': { $in: ['All', 'National', 'All India', filters.state] } },
+                    { state: { $in: ['All India', 'National', filters.state] } },
+                ];
+            }
         }
         if (filters.gender && filters.gender !== 'All') {
             query['eligibilityCriteria.gender'] = { $in: ['All', filters.gender] };
@@ -84,6 +99,20 @@ class SchemeService {
             return true;
         }
         return false;
+    }
+    static async getStatesSummary() {
+        const stateCounts = await Scheme_js_1.Scheme.aggregate([
+            { $match: { status: 'Active', schemeLevel: 'State' } },
+            { $group: { _id: '$state', count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+        ]);
+        const centralCount = await Scheme_js_1.Scheme.countDocuments({ status: 'Active', schemeLevel: 'Central' });
+        const totalCount = await Scheme_js_1.Scheme.countDocuments({ status: 'Active' });
+        return {
+            centralCount,
+            totalCount,
+            states: stateCounts.map((s) => ({ state: s._id, count: s.count })),
+        };
     }
 }
 exports.SchemeService = SchemeService;

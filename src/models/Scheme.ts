@@ -9,6 +9,8 @@ export interface IScheme extends Document {
   category: Types.ObjectId | string;
   ministry: string;
   department?: string;
+  schemeLevel: 'Central' | 'State';
+  state: string;
   benefitType: 'Direct Benefit Transfer' | 'Subsidy' | 'Loan / Credit' | 'Insurance' | 'Skill Training' | 'In-Kind Support';
   financialBenefit: string;
   eligibilityCriteria: IEligibilityCriteria;
@@ -34,6 +36,8 @@ const schemeSchema = new Schema<IScheme>(
     category: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
     ministry: { type: String, required: true, trim: true },
     department: { type: String, default: '' },
+    schemeLevel: { type: String, enum: ['Central', 'State'], default: 'Central' },
+    state: { type: String, default: 'All India', trim: true },
     benefitType: {
       type: String,
       enum: ['Direct Benefit Transfer', 'Subsidy', 'Loan / Credit', 'Insurance', 'Skill Training', 'In-Kind Support'],
@@ -66,5 +70,6 @@ const schemeSchema = new Schema<IScheme>(
 
 schemeSchema.index({ title: 'text', shortDescription: 'text', ministry: 'text', tags: 'text' });
 schemeSchema.index({ category: 1, status: 1 });
+schemeSchema.index({ schemeLevel: 1, state: 1, status: 1 });
 
 export const Scheme = mongoose.model<IScheme>('Scheme', schemeSchema);

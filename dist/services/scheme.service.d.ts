@@ -4,6 +4,8 @@ export interface ISchemeQueryFilters {
     category?: string;
     benefitType?: string;
     state?: string;
+    schemeLevel?: 'Central' | 'State' | 'All' | string;
+    stateOnly?: boolean | string;
     gender?: string;
     occupation?: string;
     status?: string;
@@ -29,4 +31,12 @@ export declare class SchemeService {
     static createScheme(data: Partial<IScheme>): Promise<IScheme>;
     static updateScheme(id: string, data: Partial<IScheme>): Promise<IScheme | null>;
     static deleteScheme(id: string): Promise<boolean>;
+    static getStatesSummary(): Promise<{
+        centralCount: number;
+        totalCount: number;
+        states: {
+            state: any;
+            count: any;
+        }[];
+    }>;
 }

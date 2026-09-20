@@ -57,6 +57,7 @@ const categoriesData = [
     },
 ];
 const schemesData_js_1 = require("./schemesData.js");
+const stateSchemesData_js_1 = require("./stateSchemesData.js");
 const seedDatabase = async () => {
     try {
         console.log('🌱 Starting comprehensive database seeding...');
@@ -116,8 +117,8 @@ const seedDatabase = async () => {
             categoryMap.set(cat.slug, existing._id);
         }
         console.log(`  ✅ Synced ${categoryMap.size} active categories`);
-        // 4. Seed Schemes
-        console.log('📜 Seeding Schemes with 8-Factor criteria...');
+        // 4. Seed Schemes (Central + State)
+        console.log('📜 Seeding Schemes with 8-Factor criteria (Central + State-wise)...');
         try {
             await Scheme_js_1.Scheme.collection.dropIndex('code_1');
         }
@@ -125,7 +126,11 @@ const seedDatabase = async () => {
             // index does not exist or already dropped
         }
         let seededSchemes = 0;
-        for (const scheme of schemesData_js_1.schemesData) {
+        const allSchemesToSeed = [
+            ...schemesData_js_1.schemesData.map((s) => ({ ...s, schemeLevel: s.schemeLevel || 'Central', state: s.state || 'All India' })),
+            ...stateSchemesData_js_1.stateSchemesData.map((s) => ({ ...s, schemeLevel: 'State', state: s.state || 'State Specific' })),
+        ];
+        for (const scheme of allSchemesToSeed) {
             const categoryId = categoryMap.get(scheme.categorySlug);
             if (!categoryId)
                 continue;
@@ -135,6 +140,8 @@ const seedDatabase = async () => {
                 category: categoryId,
                 ministry: scheme.ministry,
                 department: scheme.department,
+                schemeLevel: scheme.schemeLevel,
+                state: scheme.state,
                 shortDescription: scheme.shortDescription,
                 description: scheme.description,
                 benefitType: scheme.benefitType,
@@ -154,7 +161,9 @@ const seedDatabase = async () => {
             const count = await Scheme_js_1.Scheme.countDocuments({ category: catId, status: 'Active' });
             await Category_js_1.Category.findByIdAndUpdate(catId, { schemeCount: count });
         }
-        console.log(`  ✅ Successfully seeded ${seededSchemes} government schemes!`);
+        const stateCount = await Scheme_js_1.Scheme.countDocuments({ schemeLevel: 'State', status: 'Active' });
+        const centralCount = await Scheme_js_1.Scheme.countDocuments({ schemeLevel: 'Central', status: 'Active' });
+        console.log(`  ✅ Successfully seeded ${seededSchemes} schemes (${centralCount} Central, ${stateCount} State-wise)!`);
         console.log('🎉 Seeding completed successfully.');
         process.exit(0);
     }

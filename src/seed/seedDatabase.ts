@@ -57,6 +57,7 @@ const categoriesData = [
 ];
 
 import { schemesData } from './schemesData.js';
+import { stateSchemesData } from './stateSchemesData.js';
 
 export const seedDatabase = async () => {
   try {
@@ -126,16 +127,20 @@ export const seedDatabase = async () => {
     }
     console.log(`  ✅ Synced ${categoryMap.size} active categories`);
 
-    // 4. Seed Schemes
-    console.log('📜 Seeding Schemes with 8-Factor criteria...');
+    // 4. Seed Schemes (Central + State)
+    console.log('📜 Seeding Schemes with 8-Factor criteria (Central + State-wise)...');
     try {
       await Scheme.collection.dropIndex('code_1');
     } catch (e) {
       // index does not exist or already dropped
     }
     let seededSchemes = 0;
+    const allSchemesToSeed = [
+      ...schemesData.map((s) => ({ ...s, schemeLevel: s.schemeLevel || 'Central', state: s.state || 'All India' })),
+      ...stateSchemesData.map((s) => ({ ...s, schemeLevel: 'State' as const, state: s.state || 'State Specific' })),
+    ];
 
-    for (const scheme of schemesData) {
+    for (const scheme of allSchemesToSeed) {
       const categoryId = categoryMap.get(scheme.categorySlug);
       if (!categoryId) continue;
 
@@ -147,6 +152,8 @@ export const seedDatabase = async () => {
           category: categoryId,
           ministry: scheme.ministry,
           department: scheme.department,
+          schemeLevel: scheme.schemeLevel,
+          state: scheme.state,
           shortDescription: scheme.shortDescription,
           description: scheme.description,
           benefitType: scheme.benefitType,
@@ -170,7 +177,10 @@ export const seedDatabase = async () => {
       await Category.findByIdAndUpdate(catId, { schemeCount: count });
     }
 
-    console.log(`  ✅ Successfully seeded ${seededSchemes} government schemes!`);
+    const stateCount = await Scheme.countDocuments({ schemeLevel: 'State', status: 'Active' });
+    const centralCount = await Scheme.countDocuments({ schemeLevel: 'Central', status: 'Active' });
+
+    console.log(`  ✅ Successfully seeded ${seededSchemes} schemes (${centralCount} Central, ${stateCount} State-wise)!`);
     console.log('🎉 Seeding completed successfully.');
     process.exit(0);
   } catch (error) {
