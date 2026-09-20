@@ -6,6 +6,7 @@ import applicationRoutes from './application.routes.js';
 import categoryRoutes from './category.routes.js';
 import userRoutes from './user.routes.js';
 import statsRoutes from './stats.routes.js';
+import savedSchemeRoutes from './savedScheme.routes.js';
 
 const apiRouter = Router();
 
@@ -16,6 +17,7 @@ apiRouter.use('/applications', applicationRoutes);
 apiRouter.use('/categories', categoryRoutes);
 apiRouter.use('/users', userRoutes);
 apiRouter.use('/stats', statsRoutes);
+apiRouter.use('/saved-schemes', savedSchemeRoutes);
 
 // Health check endpoint
 apiRouter.get('/health', (_req, res) => {
