@@ -185,6 +185,46 @@ class EligibilityService {
         results.sort((a, b) => b.score - a.score);
         return results;
     }
+    /**
+     * Validates profile for statutory consistency and real-world conflicts.
+     */
+    static validateProfileConsistency(profile) {
+        const errors = [];
+        const warnings = [];
+        const age = Number(profile.age) || 0;
+        const income = Number(profile.annualIncome) || 0;
+        const gender = (profile.gender || '').toLowerCase();
+        const occupation = (profile.occupation || '').toLowerCase();
+        const category = (profile.category || '').toUpperCase();
+        const specialStatus = Array.isArray(profile.specialStatus)
+            ? profile.specialStatus.map((s) => s.toLowerCase())
+            : [];
+        // 1. Age vs Child Labour / Adult occupation
+        if (age < 14 && !['student', 'child', 'unemployed'].includes(occupation)) {
+            errors.push('Under the Child Labour (Prohibition & Regulation) Act, applicants under 14 cannot be registered under adult commercial trades (Farmer, Artisan, Vendor, Business). Please select "Student".');
+        }
+        // 2. Minor Business Ownership / Commercial Credit
+        if (age < 18 && ['business owner', 'self-employed'].includes(occupation)) {
+            warnings.push('Applicants under 18 cannot independently sign institutional credit agreements without an authorized parent or legal guardian.');
+        }
+        // 3. Gender vs Female-specific special status
+        if (gender === 'male' && (specialStatus.includes('girl child') || specialStatus.includes('single mother'))) {
+            errors.push('Incompatible selection: Female-restricted criteria ("Girl Child" / "Single Mother") selected for a Male applicant profile.');
+        }
+        // 4. EWS income cap
+        if (category === 'EWS' && income > 800000) {
+            errors.push(`EWS (Economically Weaker Section) criteria requires annual family income to be strictly under ₹8,00,000 (Your input: ₹${income.toLocaleString('en-IN')}).`);
+        }
+        // 5. Senior citizen notice
+        if (age >= 60 && occupation === 'student') {
+            warnings.push('Senior citizens (60+) typically do not qualify for youth apprenticeship programs (capped at 35), but are eligible for Atal Pension and Senior Social Security.');
+        }
+        return {
+            isValid: errors.length === 0,
+            errors,
+            warnings,
+        };
+    }
 }
 exports.EligibilityService = EligibilityService;
 //# sourceMappingURL=eligibility.service.js.map

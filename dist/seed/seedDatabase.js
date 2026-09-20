@@ -391,6 +391,12 @@ const seedDatabase = async () => {
         console.log(`  ✅ Synced ${categoryMap.size} categories`);
         // 4. Seed Schemes
         console.log('📜 Seeding Schemes with 8-Factor criteria...');
+        try {
+            await Scheme_js_1.Scheme.collection.dropIndex('code_1');
+        }
+        catch (e) {
+            // index does not exist or already dropped
+        }
         let seededSchemes = 0;
         for (const scheme of schemesData) {
             const categoryId = categoryMap.get(scheme.categorySlug);

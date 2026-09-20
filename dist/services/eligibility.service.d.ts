@@ -69,4 +69,12 @@ export declare class EligibilityService {
         matchedRules: string[];
         unmatchedRules: string[];
     }[]>;
+    /**
+     * Validates profile for statutory consistency and real-world conflicts.
+     */
+    static validateProfileConsistency(profile: Record<string, any>): {
+        isValid: boolean;
+        errors: string[];
+        warnings: string[];
+    };
 }

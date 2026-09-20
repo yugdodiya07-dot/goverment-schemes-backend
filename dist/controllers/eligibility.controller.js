@@ -7,6 +7,16 @@ class EligibilityController {
     static async checkEligibility(req, res, next) {
         try {
             const profile = req.body;
+            // Validate statutory consistency
+            const validation = eligibility_service_js_1.EligibilityService.validateProfileConsistency(profile);
+            if (!validation.isValid) {
+                return res.status(422).json({
+                    success: false,
+                    message: 'Profile contains conflicting or invalid criteria',
+                    errors: validation.errors,
+                    warnings: validation.warnings,
+                });
+            }
             const evaluatedSchemes = await eligibility_service_js_1.EligibilityService.evaluateAllSchemes(profile);
             const eligibleSchemes = evaluatedSchemes.filter((item) => item.isEligible);
             // Save to history asynchronously
@@ -29,6 +39,7 @@ class EligibilityController {
                     totalEvaluated: evaluatedSchemes.length,
                     eligibleCount: eligibleSchemes.length,
                     schemes: evaluatedSchemes,
+                    warnings: validation.warnings,
                 },
             });
         }
