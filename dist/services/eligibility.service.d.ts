@@ -24,6 +24,7 @@ export declare class EligibilityService {
         };
         score: number;
         isEligible: boolean;
+        disqualifications: string[] | undefined;
         breakdown: {
             age: {
                 score: number;

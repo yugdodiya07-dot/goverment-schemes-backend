@@ -47,4 +47,5 @@ export interface IWeightedScoreResult {
   isEligible: boolean;
   matchedRules: string[];
   unmatchedRules: string[];
+  disqualifications?: string[];
 }

@@ -16,141 +16,152 @@ class EligibilityService {
      * - Special Status (5%)
      */
     static calculateMatch(profile, criteria) {
-        let score = 0;
         const matchedRules = [];
         const unmatchedRules = [];
-        // 1. Age Factor (20%)
+        const disqualifications = [];
+        // 1. Mandatory Gate: Age Bracket (Weight: 20%)
         const userAge = Number(profile.age) || 25;
         const minAge = criteria.minAge ?? 0;
-        const maxAge = criteria.maxAge ?? 100;
-        let ageScore = 0;
+        const maxAge = criteria.maxAge ?? 115;
         let agePassed = false;
+        let ageScore = 0;
         if (userAge >= minAge && userAge <= maxAge) {
-            ageScore = 20;
             agePassed = true;
-            matchedRules.push(`Age (${userAge} yrs) is within eligible range (${minAge}-${maxAge} yrs)`);
-        }
-        else if (userAge < minAge && minAge - userAge <= 3) {
-            ageScore = 10;
-            unmatchedRules.push(`Age is near the minimum threshold (${minAge} yrs)`);
+            ageScore = 20;
+            matchedRules.push(`Age (${userAge} yrs) satisfies required age bracket (${minAge}–${maxAge} yrs)`);
         }
         else {
-            unmatchedRules.push(`Age (${userAge} yrs) outside required bracket (${minAge}-${maxAge} yrs)`);
+            disqualifications.push(`Age Mismatch: Scheme requires age between ${minAge} and ${maxAge} yrs (Applicant is ${userAge} yrs).`);
+            unmatchedRules.push(`Age (${userAge} yrs) outside required bracket (${minAge}–${maxAge} yrs)`);
         }
-        score += ageScore;
-        // 2. Annual Income Factor (20%)
-        const userIncome = profile.annualIncome !== undefined ? Number(profile.annualIncome) : 250000;
+        // 2. Mandatory Gate: Annual Income Ceiling (Weight: 20%)
+        const userIncome = profile.annualIncome !== undefined ? Number(profile.annualIncome) : 0;
         const maxIncome = criteria.maxIncome ?? 100000000;
-        let incomeScore = 0;
         let incomePassed = false;
+        let incomeScore = 0;
         if (userIncome <= maxIncome) {
-            incomeScore = 20;
             incomePassed = true;
-            matchedRules.push(`Income (₹${userIncome.toLocaleString('en-IN')}) meets ceiling of ₹${maxIncome.toLocaleString('en-IN')}`);
-        }
-        else if (userIncome <= maxIncome * 1.2) {
-            incomeScore = 10;
-            unmatchedRules.push(`Income slightly exceeds threshold`);
+            incomeScore = 20;
+            matchedRules.push(`Annual income (₹${userIncome.toLocaleString('en-IN')}) is within permissible ceiling of ₹${maxIncome.toLocaleString('en-IN')}`);
         }
         else {
+            disqualifications.push(`Income Ceiling Exceeded: Scheme requires family income under ₹${maxIncome.toLocaleString('en-IN')} (Applicant income: ₹${userIncome.toLocaleString('en-IN')}).`);
             unmatchedRules.push(`Income exceeds maximum permissible limit (₹${maxIncome.toLocaleString('en-IN')})`);
         }
-        score += incomeScore;
-        // 3. Occupation Factor (20%)
-        const userOccupation = (profile.occupation || 'all').toLowerCase();
-        const eligibleOccupations = (criteria.eligibleOccupations || ['All']).map((o) => o.toLowerCase());
-        let occScore = 0;
+        // 3. Mandatory Gate: Eligible Occupation (Weight: 20%)
+        const userOccupation = (profile.occupation || '').trim().toLowerCase();
+        const eligibleOccupations = (criteria.eligibleOccupations || ['All']).map((o) => o.trim().toLowerCase());
         let occPassed = false;
+        let occScore = 0;
         if (eligibleOccupations.includes('all') || eligibleOccupations.includes(userOccupation)) {
-            occScore = 20;
             occPassed = true;
-            matchedRules.push(`Occupation (${profile.occupation || 'Any'}) is eligible`);
+            occScore = 20;
+            matchedRules.push(`Occupation (${profile.occupation || 'General'}) is directly eligible`);
         }
         else {
+            disqualifications.push(`Occupation Ineligible: Scheme strictly requires occupation to be [${(criteria.eligibleOccupations || []).join(', ')}] (Applicant occupation: ${profile.occupation || 'None'}).`);
             unmatchedRules.push(`Scheme requires specific occupations (${(criteria.eligibleOccupations || []).join(', ')})`);
         }
-        score += occScore;
-        // 4. Gender Factor (10%)
-        const userGender = (profile.gender || 'all').toLowerCase();
-        const eligibleGender = (criteria.gender || 'All').toLowerCase();
-        let genderScore = 0;
+        // 4. Mandatory Gate: Gender Restriction (Weight: 10%)
+        const userGender = (profile.gender || 'all').trim().toLowerCase();
+        const eligibleGender = (criteria.gender || 'All').trim().toLowerCase();
         let genderPassed = false;
+        let genderScore = 0;
         if (eligibleGender === 'all' || eligibleGender === userGender) {
-            genderScore = 10;
             genderPassed = true;
-            matchedRules.push(`Gender requirement matched`);
+            genderScore = 10;
+            matchedRules.push(`Gender requirement matched (${criteria.gender || 'All'})`);
         }
         else {
+            disqualifications.push(`Gender Restriction: Scheme is exclusively reserved for ${criteria.gender} beneficiaries (Applicant is ${profile.gender}).`);
             unmatchedRules.push(`Scheme restricted to ${criteria.gender} beneficiaries`);
         }
-        score += genderScore;
-        // 5. State / Region Factor (10%)
-        const userState = (profile.state || 'all').toLowerCase();
-        const eligibleStates = (criteria.eligibleStates || ['All']).map((s) => s.toLowerCase());
-        let stateScore = 0;
+        // 5. Mandatory Gate: State / UT Domicile (Weight: 10%)
+        const userState = (profile.state || 'National').trim().toLowerCase();
+        const eligibleStates = (criteria.eligibleStates || ['All']).map((s) => s.trim().toLowerCase());
         let statePassed = false;
-        if (eligibleStates.includes('all') || eligibleStates.includes(userState)) {
-            stateScore = 10;
+        let stateScore = 0;
+        if (eligibleStates.includes('all') || userState === 'national' || eligibleStates.includes(userState)) {
             statePassed = true;
-            matchedRules.push(`State (${profile.state || 'National'}) is eligible`);
+            stateScore = 10;
+            matchedRules.push(`State domicile (${profile.state || 'National'}) is eligible`);
         }
         else {
+            disqualifications.push(`State Restriction: Scheme is restricted to residents of: ${(criteria.eligibleStates || []).join(', ')}.`);
             unmatchedRules.push(`Applicable only for selected states: ${(criteria.eligibleStates || []).join(', ')}`);
         }
-        score += stateScore;
-        // 6. Social Category Factor (10%)
-        const userCat = (profile.category || 'all').toLowerCase();
-        const eligibleCats = (criteria.eligibleCategories || ['All']).map((c) => c.toLowerCase());
-        let catScore = 0;
+        // 6. Mandatory Gate: Social Category (Weight: 10%)
+        const userCat = (profile.category || 'General').trim().toLowerCase();
+        const eligibleCats = (criteria.eligibleCategories || ['All']).map((c) => c.trim().toLowerCase());
         let catPassed = false;
+        let catScore = 0;
         if (eligibleCats.includes('all') || eligibleCats.includes(userCat)) {
-            catScore = 10;
             catPassed = true;
-            matchedRules.push(`Category (${profile.category || 'All'}) is covered`);
+            catScore = 10;
+            matchedRules.push(`Social category (${profile.category || 'All'}) is eligible`);
         }
         else {
+            disqualifications.push(`Category Restriction: Scheme is reserved for [${(criteria.eligibleCategories || []).join(', ')}] categories.`);
             unmatchedRules.push(`Scheme restricted to ${(criteria.eligibleCategories || []).join(', ')} categories`);
         }
-        score += catScore;
-        // 7. Disability Status Factor (5%)
+        // 7. Mandatory Gate: Disability Quota (Weight: 5%)
         const requiresDisability = criteria.requiresDisability || false;
         const userDisability = Boolean(profile.disabilityStatus);
-        let disScore = 0;
         let disPassed = false;
+        let disScore = 0;
         if (!requiresDisability || userDisability) {
-            disScore = 5;
             disPassed = true;
-            matchedRules.push(`Disability requirements met`);
+            disScore = 5;
+            matchedRules.push(requiresDisability ? `Mandatory Divyangjan benchmark met` : `Open to all ability statuses`);
         }
         else {
+            disqualifications.push(`Disability Quota: Scheme specifically targets Persons with Disabilities (UDID card required).`);
             unmatchedRules.push(`Scheme specifically targets Persons with Disabilities (PwD)`);
         }
-        score += disScore;
-        // 8. Special Status Factor (5%)
-        const requiredSpecial = (criteria.requiredSpecialStatus || []).map((s) => s.toLowerCase());
-        const userSpecial = Array.isArray(profile.specialStatus) ? profile.specialStatus.map((s) => s.toLowerCase()) : [];
-        let specScore = 0;
+        // 8. Mandatory Gate: Special Status Factor (Weight: 5%)
+        const requiredSpecial = (criteria.requiredSpecialStatus || []).map((s) => s.trim().toLowerCase());
+        const userSpecial = Array.isArray(profile.specialStatus)
+            ? profile.specialStatus.map((s) => s.trim().toLowerCase())
+            : [];
+        // User occupation and gender can inherently fulfill matching special conditions
+        const effectiveSpecial = new Set([...userSpecial, userOccupation]);
+        if (userGender === 'female' && userAge <= 18)
+            effectiveSpecial.add('girl child');
         let specPassed = false;
+        let specScore = 0;
         if (requiredSpecial.length === 0) {
-            specScore = 5;
             specPassed = true;
+            specScore = 5;
         }
         else {
-            const match = requiredSpecial.some((req) => userSpecial.includes(req));
+            const match = requiredSpecial.some((req) => effectiveSpecial.has(req));
             if (match) {
-                specScore = 5;
                 specPassed = true;
-                matchedRules.push(`Special status requirements verified`);
+                specScore = 5;
+                matchedRules.push(`Special status requirements verified (${(criteria.requiredSpecialStatus || []).join(', ')})`);
             }
             else {
+                disqualifications.push(`Special Attribute Required: Scheme requires [${(criteria.requiredSpecialStatus || []).join(', ')}] qualification.`);
                 unmatchedRules.push(`Requires special status: ${(criteria.requiredSpecialStatus || []).join(', ')}`);
             }
         }
-        score += specScore;
-        const finalScore = Math.min(100, Math.round(score));
+        // Statutory Eligibility Determination:
+        // User is ONLY eligible if ALL mandatory statutory gates pass with ZERO disqualifications.
+        const isEligible = disqualifications.length === 0;
+        let finalScore = 0;
+        if (isEligible) {
+            finalScore = ageScore + incomeScore + occScore + genderScore + stateScore + catScore + disScore + specScore;
+            finalScore = Math.min(100, Math.max(80, Math.round(finalScore)));
+        }
+        else {
+            // For disqualified schemes, calculate partial score (capped strictly at 35%) so users clearly see they are ineligible
+            const passedCount = [agePassed, incomePassed, occPassed, genderPassed, statePassed, catPassed, disPassed, specPassed].filter(Boolean).length;
+            finalScore = Math.round((passedCount / 8) * 35);
+        }
         return {
             score: finalScore,
-            isEligible: finalScore >= 60,
+            isEligible,
+            disqualifications,
             breakdown: {
                 age: { score: ageScore, max: 20, passed: agePassed },
                 income: { score: incomeScore, max: 20, passed: incomePassed },
@@ -176,13 +187,20 @@ class EligibilityService {
                 scheme,
                 score: match.score,
                 isEligible: match.isEligible,
+                disqualifications: match.disqualifications,
                 breakdown: match.breakdown,
                 matchedRules: match.matchedRules,
                 unmatchedRules: match.unmatchedRules,
             };
         });
-        // Sort by descending score
-        results.sort((a, b) => b.score - a.score);
+        // Sort: Eligible schemes first (sorted by score descending), followed by disqualified schemes
+        results.sort((a, b) => {
+            if (a.isEligible && !b.isEligible)
+                return -1;
+            if (!a.isEligible && b.isEligible)
+                return 1;
+            return b.score - a.score;
+        });
         return results;
     }
     /**

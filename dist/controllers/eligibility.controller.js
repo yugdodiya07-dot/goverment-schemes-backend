@@ -19,13 +19,14 @@ class EligibilityController {
             }
             const evaluatedSchemes = await eligibility_service_js_1.EligibilityService.evaluateAllSchemes(profile);
             const eligibleSchemes = evaluatedSchemes.filter((item) => item.isEligible);
+            const ineligibleSchemes = evaluatedSchemes.filter((item) => !item.isEligible);
             // Save to history asynchronously
             if (req.user) {
                 EligibilityHistory_js_1.EligibilityHistory.create({
                     user: req.user._id,
                     searchCriteria: profile,
                     eligibleSchemesCount: eligibleSchemes.length,
-                    topMatchedSchemes: evaluatedSchemes.slice(0, 5).map((item) => ({
+                    topMatchedSchemes: eligibleSchemes.slice(0, 5).map((item) => ({
                         schemeId: item.scheme._id,
                         title: item.scheme.title,
                         score: item.score,
@@ -38,6 +39,9 @@ class EligibilityController {
                 data: {
                     totalEvaluated: evaluatedSchemes.length,
                     eligibleCount: eligibleSchemes.length,
+                    ineligibleCount: ineligibleSchemes.length,
+                    eligibleSchemes,
+                    ineligibleSchemes,
                     schemes: evaluatedSchemes,
                     warnings: validation.warnings,
                 },

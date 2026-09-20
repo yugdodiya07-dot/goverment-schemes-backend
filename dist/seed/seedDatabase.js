@@ -76,7 +76,7 @@ const schemesData = [
             eligibleOccupations: ['Farmer'],
             eligibleCategories: ['All'],
             requiresDisability: false,
-            requiredSpecialStatus: ['Farmer'],
+            requiredSpecialStatus: [],
         },
         requiredDocuments: [
             'Aadhaar Card',
@@ -213,7 +213,7 @@ const schemesData = [
             gender: 'Female',
             maxIncome: 100000000,
             eligibleStates: ['All'],
-            eligibleOccupations: ['Student', 'Child'],
+            eligibleOccupations: ['All', 'Student', 'Child'],
             eligibleCategories: ['All'],
             requiresDisability: false,
             requiredSpecialStatus: ['Girl Child'],
@@ -283,7 +283,7 @@ const schemesData = [
             eligibleOccupations: ['Artisan', 'Self-Employed'],
             eligibleCategories: ['All'],
             requiresDisability: false,
-            requiredSpecialStatus: ['Artisan', 'Craftsperson'],
+            requiredSpecialStatus: [],
         },
         requiredDocuments: [
             'Aadhaar Card',
