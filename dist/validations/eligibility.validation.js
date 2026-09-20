@@ -4,7 +4,7 @@ exports.eligibilityCheckSchema = void 0;
 const zod_1 = require("zod");
 exports.eligibilityCheckSchema = zod_1.z.object({
     body: zod_1.z.object({
-        age: zod_1.z.number().min(0).max(120),
+        age: zod_1.z.number().min(1, 'Applicant age must be at least 1 completed year').max(115, 'Applicant age cannot exceed 115 years'),
         gender: zod_1.z.string().optional(),
         annualIncome: zod_1.z.number().min(0),
         state: zod_1.z.string().optional(),

@@ -207,8 +207,19 @@ export class EligibilityService {
       ? profile.specialStatus.map((s: string) => s.toLowerCase())
       : [];
 
+    // 0. Age Validity Check
+    if (isNaN(age) || age <= 0) {
+      errors.push(
+        'Statutory Rejection: Applicant age must be at least 1 completed year (1-115). Applications for newborn infants are processed under parent/maternal welfare schemes.'
+      );
+    } else if (age > 115) {
+      errors.push(
+        'Statutory Advisory: Applicant age exceeds valid civic registry limit (115 years). Please enter a verified age.'
+      );
+    }
+
     // 1. Age vs Child Labour / Adult occupation
-    if (age < 14 && !['student', 'child', 'unemployed'].includes(occupation)) {
+    if (age > 0 && age < 14 && !['student', 'child', 'unemployed'].includes(occupation)) {
       errors.push(
         'Under the Child Labour (Prohibition & Regulation) Act, applicants under 14 cannot be registered under adult commercial trades (Farmer, Artisan, Vendor, Business). Please select "Student".'
       );
